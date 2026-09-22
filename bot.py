@@ -1,5 +1,7 @@
 import os
 import asyncio
+import threading
+from flask import Flask
 from telethon import TelegramClient, events
 from telethon.sessions import StringSession
 from telethon.errors import (
@@ -187,8 +189,20 @@ async def finalize(event, uid):
             pass
         sessions.pop(uid, None)
 
+# ---------- Dummy HTTP server (Render ke liye) ----------
+app = Flask(__name__)
+
+@app.route("/")
+@app.route("/health")
+def health():
+    return "Bot is alive", 200
+
+def run_web():
+    port = int(os.environ.get("PORT", 10000))
+    app.run(host="0.0.0.0", port=port)
 
 async def main():
+    threading.Thread(target=run_web, daemon=True).start()
     await bot.start(bot_token=BOT_TOKEN)
     print("Bot chal raha hai...")
     await bot.run_until_disconnected()
